@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, BarChart3, BookOpen, GraduationCap, LayoutDashboard, Map, Settings, ShieldCheck, User } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, ChevronLeft, ChevronRight, GraduationCap, LayoutDashboard, Map, Settings, ShieldCheck, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
@@ -35,6 +35,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const checklist = useLearningStore((state) => state.checklist);
   const lastReadPages = useLearningStore((state) => state.lastReadPages);
   const [coursePickerOpen, setCoursePickerOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const currentCourse = getCourseById(currentCourseId);
   const lessonsHref = currentCourse.weeks[0] ? `/weeks/${currentCourse.weeks[0].id}` : "/dashboard";
   const courseProgress = getCourseProgress(currentCourse.weeks, checklist);
@@ -99,7 +100,24 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="absolute right-8 top-0 z-40 sm:right-10">
         <ThemeToggle />
       </div>
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r bg-card/95 p-5 shadow-[20px_0_60px_rgba(2,6,23,0.18)] backdrop-blur lg:block">
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 hidden border-r bg-card/95 p-5 shadow-[20px_0_60px_rgba(2,6,23,0.18)] backdrop-blur transition-[width] duration-300 ease-out lg:block",
+          sidebarCollapsed ? "w-20" : "w-72"
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setSidebarCollapsed((collapsed) => !collapsed);
+            setCoursePickerOpen(false);
+          }}
+          className="absolute -right-3 top-20 z-50 grid h-7 w-7 place-items-center rounded-full border bg-background text-muted-foreground shadow-md transition hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
         <div className="relative flex items-start gap-3">
           <button
             type="button"
@@ -114,14 +132,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
           >
             <GraduationCap className="h-6 w-6" />
           </button>
-          <Link href="/dashboard" prefetch={false} className="min-w-0 pt-0.5">
+          <Link
+            href="/dashboard"
+            prefetch={false}
+            className={cn(
+              "min-w-0 pt-0.5 transition-all duration-200",
+              sidebarCollapsed && "pointer-events-none w-0 translate-x-2 overflow-hidden opacity-0"
+            )}
+          >
             <div className="text-lg font-bold">CourseMap</div>
             <div className="truncate text-xs text-muted-foreground">{currentCourse.shortTitle}</div>
           </Link>
           <div
             className={cn(
               "absolute left-[3.25rem] top-0 z-50 w-60 origin-left rounded-lg border bg-card p-2 shadow-xl transition-all duration-300 ease-out",
-              coursePickerOpen ? "pointer-events-auto translate-x-0 scale-100 opacity-100" : "pointer-events-none -translate-x-3 scale-95 opacity-0"
+              coursePickerOpen && !sidebarCollapsed ? "pointer-events-auto translate-x-0 scale-100 opacity-100" : "pointer-events-none -translate-x-3 scale-95 opacity-0"
             )}
           >
             <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Choose course</p>
@@ -152,7 +177,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <nav className="mt-8 space-y-6">
           {navGroups.map((group) => (
             <div key={group.title} className="space-y-1.5">
-              <p className="px-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/75">{group.title}</p>
+              <p
+                className={cn(
+                  "px-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/75 transition-all duration-200",
+                  sidebarCollapsed && "h-0 overflow-hidden opacity-0"
+                )}
+              >
+                {group.title}
+              </p>
               {group.items.map((item) => {
                 const active = pathname === item.href || Boolean(item.match && pathname.startsWith(item.match));
                 return (
@@ -160,8 +192,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     key={item.href}
                     href={item.href}
                     prefetch={false}
+                    title={sidebarCollapsed ? item.label : undefined}
                     className={cn(
                       "group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-200 hover:translate-x-1 hover:bg-muted/70 hover:text-foreground",
+                      sidebarCollapsed && "justify-center px-2 hover:translate-x-0",
                       active && "bg-primary/[0.12] text-primary shadow-[0_10px_30px_rgba(129,140,248,0.16)] hover:translate-x-0 hover:bg-primary/[0.12]"
                     )}
                   >
@@ -179,8 +213,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     >
                       <item.icon className="h-4 w-4" />
                     </span>
-                    <span className="min-w-0 flex-1">{item.label}</span>
-                    {item.badge ? (
+                    <span className={cn("min-w-0 flex-1 transition-all duration-200", sidebarCollapsed && "w-0 flex-none overflow-hidden opacity-0")}>
+                      {item.label}
+                    </span>
+                    {item.badge && !sidebarCollapsed ? (
                       <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
                         {item.badge}
                       </span>
@@ -191,7 +227,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
           ))}
         </nav>
-        <div className="absolute inset-x-5 bottom-5">
+        <div className={cn("absolute inset-x-5 bottom-5 transition-all duration-200", sidebarCollapsed && "pointer-events-none translate-y-2 opacity-0")}>
           <Link
             href={continueHref}
             prefetch={false}
@@ -219,7 +255,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </Link>
         </div>
       </aside>
-      <header className="sticky top-0 z-20 border-b bg-background lg:ml-72">
+      <header className={cn("sticky top-0 z-20 border-b bg-background transition-[margin] duration-300 ease-out", sidebarCollapsed ? "lg:ml-20" : "lg:ml-72")}>
         <div className="flex h-16 items-center justify-between px-4 sm:px-6">
           <div>
             <p className="text-sm text-muted-foreground">Instructor-prepared weekly PDFs</p>
@@ -228,7 +264,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="h-16 w-8" aria-hidden="true" />
         </div>
       </header>
-      <main className="pb-20 lg:ml-72 lg:pb-0">{children}</main>
+      <main className={cn("pb-20 transition-[margin] duration-300 ease-out lg:pb-0", sidebarCollapsed ? "lg:ml-20" : "lg:ml-72")}>{children}</main>
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-card p-1 lg:hidden">
         {nav.slice(0, 5).map((item) => (
           <Link key={item.href} href={item.href} prefetch={false} className="grid place-items-center gap-1 rounded-md py-2 text-[11px] text-muted-foreground">
