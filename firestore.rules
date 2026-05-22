@@ -1,0 +1,77 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function owns(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email in [
+          "admin@coursemap.dev",
+          "yunusterzi616161@gmail.com"
+        ]
+      );
+    }
+
+    match /admins/{userId} {
+      allow read: if owns(userId);
+      allow write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if owns(userId) || isAdmin();
+      allow create, update: if owns(userId);
+      allow delete: if false;
+    }
+
+    match /userSessions/{docId} {
+      allow read: if isAdmin() || owns(resource.data.userId);
+      allow create: if owns(request.resource.data.userId);
+      allow update: if owns(resource.data.userId);
+      allow delete: if false;
+    }
+
+    match /userActivity/{docId} {
+      allow read: if isAdmin() || owns(resource.data.userId);
+      allow create: if owns(request.resource.data.userId);
+      allow update, delete: if false;
+    }
+
+    match /userProgress/{docId} {
+      allow read: if isAdmin() || owns(resource.data.userId);
+      allow create, update, delete: if owns(resource.data.userId) || owns(request.resource.data.userId);
+    }
+
+    match /weekProgress/{docId} {
+      allow read: if isAdmin() || owns(resource.data.userId);
+      allow create, update, delete: if owns(resource.data.userId) || owns(request.resource.data.userId);
+    }
+
+    match /userNotes/{docId} {
+      allow read: if isAdmin() || owns(resource.data.userId);
+      allow create, update, delete: if owns(resource.data.userId) || owns(request.resource.data.userId);
+    }
+
+    match /quizAttempts/{docId} {
+      allow read: if isAdmin() || owns(resource.data.userId);
+      allow create: if owns(request.resource.data.userId);
+      allow update, delete: if false;
+    }
+
+    match /achievements/{docId} {
+      allow read: if owns(resource.data.userId);
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
