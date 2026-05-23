@@ -123,12 +123,15 @@ export default function AdminPage() {
   return (
     <AppLayout>
       <div className="space-y-6 p-4 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm text-muted-foreground">Teacher dashboard</p>
-            <h1 className="text-2xl font-bold">Admin student activity</h1>
+        <div className="rounded-2xl border bg-gradient-to-br from-card via-card to-primary/10 p-6 shadow-sm sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-primary">Teacher dashboard</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight">Admin student activity</h1>
+              <p className="mt-2 max-w-2xl text-muted-foreground">Follow lesson progress, active learning time, and page-level activity for every student.</p>
+            </div>
+            <Button variant="outline" onClick={() => window.location.reload()}>Refresh</Button>
           </div>
-          <Button variant="outline" onClick={() => window.location.reload()}>Refresh</Button>
         </div>
 
         <section className="grid gap-4 md:grid-cols-4">
@@ -291,7 +294,7 @@ export default function AdminPage() {
 }
 
 function Metric({ title, value, icon }: { title: string; value: React.ReactNode; icon: React.ReactNode }) {
-  return <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm">{title}</CardTitle><span className="text-primary">{icon}</span></CardHeader><CardContent><div className="text-2xl font-bold">{value}</div></CardContent></Card>;
+  return <Card className="transition hover:-translate-y-0.5 hover:shadow-md"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm">{title}</CardTitle><span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">{icon}</span></CardHeader><CardContent><div className="text-2xl font-bold">{value}</div></CardContent></Card>;
 }
 
 function Info({ label, value }: { label: string; value: React.ReactNode }) {

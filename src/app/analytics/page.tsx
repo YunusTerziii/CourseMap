@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { Clock3, Target, TrendingUp } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressRing } from "@/components/progress-ring";
@@ -30,14 +31,45 @@ export default function AnalyticsPage() {
   }));
   return (
     <AppLayout>
-      <div className="grid gap-4 p-4 sm:p-6 xl:grid-cols-[320px_1fr]">
-        <Card><CardHeader><CardTitle>{activeCourse.code} progress</CardTitle></CardHeader><CardContent className="grid place-items-center gap-4"><ProgressRing value={course.percentage} size={150} /><p className="text-center text-sm text-muted-foreground">{course.completed} of {course.total} PDF pages completed</p></CardContent></Card>
-        <Card><CardHeader><CardTitle>Week by week progress</CardTitle></CardHeader><CardContent className="h-80"><WeekProgressChart data={weekData} /></CardContent></Card>
-        <Card className="xl:col-span-2"><CardHeader><CardTitle>Study activity</CardTitle></CardHeader><CardContent className="h-72"><StudyActivityChart data={weekData} /></CardContent></Card>
-        <Card><CardHeader><CardTitle>Strong topics</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{weekData.filter((w) => w.progress >= 70).map((w) => <div key={w.name} className="rounded-md bg-emerald-50 p-3 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{w.name} looks strong</div>)}{weekData.every((w) => w.progress < 70) && <p className="text-muted-foreground">Complete more checkpoints to reveal strong topics.</p>}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Topics needing review</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{weekData.filter((w) => w.progress > 0 && w.progress < 70).map((w) => <div key={w.name} className="rounded-md bg-amber-50 p-3 text-amber-800 dark:bg-amber-950 dark:text-amber-200">{w.name} needs review</div>)}{weekData.every((w) => w.progress === 0 || w.progress >= 70) && <p className="text-muted-foreground">Pages between 1% and 69% progress will appear here.</p>}</CardContent></Card>
+      <div className="space-y-4 p-4 sm:p-6">
+        <section className="rounded-2xl border bg-gradient-to-br from-card via-card to-primary/10 p-6 shadow-sm sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-primary">Learning analytics</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight">{activeCourse.shortTitle}</h1>
+              <p className="mt-2 max-w-2xl text-muted-foreground">Track page completion, weekly momentum, and the material that still needs attention.</p>
+            </div>
+            <ProgressRing value={course.percentage} size={120} />
+          </div>
+        </section>
+        <section className="grid gap-4 md:grid-cols-3">
+          <MiniMetric title="Completed pages" value={`${course.completed}/${course.total}`} icon={<Target className="h-5 w-5" />} />
+          <MiniMetric title="Average progress" value={`${course.percentage}%`} icon={<TrendingUp className="h-5 w-5" />} />
+          <MiniMetric title="Tracked weeks" value={weeks.length} icon={<Clock3 className="h-5 w-5" />} />
+        </section>
+        <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
+          <Card><CardHeader><CardTitle>{activeCourse.code} progress</CardTitle></CardHeader><CardContent className="grid place-items-center gap-4"><ProgressRing value={course.percentage} size={150} /><p className="text-center text-sm text-muted-foreground">{course.completed} of {course.total} PDF pages completed</p></CardContent></Card>
+          <Card><CardHeader><CardTitle>Week by week progress</CardTitle></CardHeader><CardContent className="h-80"><WeekProgressChart data={weekData} /></CardContent></Card>
+          <Card className="xl:col-span-2"><CardHeader><CardTitle>Study activity</CardTitle></CardHeader><CardContent className="h-72"><StudyActivityChart data={weekData} /></CardContent></Card>
+          <Card><CardHeader><CardTitle>Strong topics</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{weekData.filter((w) => w.progress >= 70).map((w) => <div key={w.name} className="rounded-md bg-emerald-50 p-3 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{w.name} looks strong</div>)}{weekData.every((w) => w.progress < 70) && <p className="text-muted-foreground">Complete more checkpoints to reveal strong topics.</p>}</CardContent></Card>
+          <Card><CardHeader><CardTitle>Topics needing review</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{weekData.filter((w) => w.progress > 0 && w.progress < 70).map((w) => <div key={w.name} className="rounded-md bg-amber-50 p-3 text-amber-800 dark:bg-amber-950 dark:text-amber-200">{w.name} needs review</div>)}{weekData.every((w) => w.progress === 0 || w.progress >= 70) && <p className="text-muted-foreground">Pages between 1% and 69% progress will appear here.</p>}</CardContent></Card>
+        </div>
       </div>
     </AppLayout>
+  );
+}
+
+function MiniMetric({ title, value, icon }: { title: string; value: React.ReactNode; icon: React.ReactNode }) {
+  return (
+    <Card className="transition hover:-translate-y-0.5 hover:shadow-md">
+      <CardContent className="flex items-center justify-between gap-4 p-5">
+        <div>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="mt-1 text-2xl font-bold">{value}</p>
+        </div>
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">{icon}</span>
+      </CardContent>
+    </Card>
   );
 }
 
