@@ -10,6 +10,11 @@ const localClassesKey = "coursemap-classes";
 const localMembersKey = "coursemap-class-members";
 const localInvitesKey = "coursemap-class-invites";
 
+export interface ClassroomDetail {
+  classroom: Classroom;
+  members: ClassMember[];
+}
+
 export async function createClassroom(input: CreateClassInput, user: AppUser): Promise<Classroom> {
   const now = new Date().toISOString();
   const classroomData = {
@@ -165,6 +170,34 @@ export async function fetchMyClassrooms(user: AppUser): Promise<Classroom[]> {
   const localMembers = readStore<ClassMember[]>(localMembersKey, []);
   const memberClassIds = new Set(localMembers.filter((member) => member.userId === user.id).map((member) => member.classId));
   return localClasses.filter((classroom) => classroom.ownerId === user.id || memberClassIds.has(classroom.id));
+}
+
+export async function fetchClassroomDetail(classId: string, user: AppUser): Promise<ClassroomDetail | null> {
+  if (db && isFirebaseConfigured) {
+    const classroomSnapshot = await getDoc(doc(db, "classes", classId));
+    if (!classroomSnapshot.exists()) return null;
+    const classroom = { id: classroomSnapshot.id, ...classroomSnapshot.data() } as Classroom;
+    let members: ClassMember[] = [];
+    if (classroom.ownerId === user.id) {
+      const memberSnapshot = await getDocs(collection(db, "classes", classId, "members"));
+      members = memberSnapshot.docs.map((memberDoc) => memberDoc.data() as ClassMember);
+    } else {
+      const memberSnapshot = await getDoc(doc(db, "classes", classId, "members", user.id));
+      members = memberSnapshot.exists() ? [memberSnapshot.data() as ClassMember] : [];
+    }
+    return { classroom, members: members.sort((a, b) => a.joinedAt.localeCompare(b.joinedAt)) };
+  }
+
+  const localClasses = readStore<Classroom[]>(localClassesKey, []);
+  const classroom = localClasses.find((item) => item.id === classId);
+  if (!classroom) return null;
+  const localMembers = readStore<ClassMember[]>(localMembersKey, []);
+  const isMember = classroom.ownerId === user.id || localMembers.some((member) => member.classId === classId && member.userId === user.id);
+  if (!isMember) return null;
+  const members = localMembers
+    .filter((member) => member.classId === classId && (classroom.ownerId === user.id || member.userId === user.id))
+    .sort((a, b) => a.joinedAt.localeCompare(b.joinedAt));
+  return { classroom, members };
 }
 
 function generateInviteCode(code: string) {

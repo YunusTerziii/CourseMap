@@ -220,6 +220,9 @@ function ClassCard({ classroom }: { classroom: Classroom }) {
             <Button type="button" variant="outline" size="sm" onClick={copyInvite}><Copy className="h-4 w-4" /> Copy</Button>
           </div>
         </div>
+        <Button asChild className="w-full">
+          <Link href={`/classes/${classroom.id}`} prefetch={false}>Open class <ArrowRight className="h-4 w-4" /></Link>
+        </Button>
       </CardContent>
     </Card>
   );
