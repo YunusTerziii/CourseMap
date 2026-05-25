@@ -70,6 +70,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /classInvites/{inviteCode} {
+      allow read: if isSignedIn();
+      allow create: if owns(request.resource.data.ownerId);
+      allow update: if owns(resource.data.ownerId);
+      allow delete: if false;
+    }
+
     match /classes/{classId} {
       allow read: if isSignedIn() && (
         resource.data.ownerId == request.auth.uid ||
@@ -85,7 +92,11 @@ service cloud.firestore {
           get(/databases/$(database)/documents/classes/$(classId)).data.ownerId == request.auth.uid
         );
         allow create: if owns(userId) && (
-          request.resource.data.role == "student" ||
+          (
+            request.resource.data.role == "student" &&
+            exists(/databases/$(database)/documents/classInvites/$(request.resource.data.inviteCode)) &&
+            get(/databases/$(database)/documents/classInvites/$(request.resource.data.inviteCode)).data.classId == classId
+          ) ||
           get(/databases/$(database)/documents/classes/$(classId)).data.ownerId == request.auth.uid
         );
         allow update: if get(/databases/$(database)/documents/classes/$(classId)).data.ownerId == request.auth.uid;

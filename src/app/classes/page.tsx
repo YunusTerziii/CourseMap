@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Copy, Plus, School, UsersRound } from "lucide-react";
+import { ArrowRight, Copy, Loader2, LogIn, Plus, School, UsersRound } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchMyClassrooms } from "@/services/classroomService";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { fetchMyClassrooms, joinClassroom } from "@/services/classroomService";
 import { useLearningStore } from "@/hooks/useLearningStore";
 import type { Classroom } from "@/types/classroom";
 import { cn } from "@/lib/utils";
@@ -16,13 +17,25 @@ export default function ClassesPage() {
   const user = useLearningStore((state) => state.user);
   const [classes, setClasses] = useState<Classroom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState("");
+
+  const loadClasses = async () => {
+    if (!user) return;
+    setLoading(true);
+    const result = await fetchMyClassrooms(user);
+    setClasses(result);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    if (!user) return;
     let active = true;
     async function load() {
+      if (!user) return;
       setLoading(true);
-      const result = await fetchMyClassrooms(user!);
+      const result = await fetchMyClassrooms(user);
       if (!active) return;
       setClasses(result);
       setLoading(false);
@@ -32,6 +45,23 @@ export default function ClassesPage() {
       active = false;
     };
   }, [user]);
+
+  const submitJoin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user || joining) return;
+    setJoining(true);
+    setJoinError("");
+    try {
+      await joinClassroom(inviteCode, user);
+      setInviteCode("");
+      setJoinOpen(false);
+      await loadClasses();
+    } catch (err) {
+      setJoinError(err instanceof Error ? err.message : "Could not join this class.");
+    } finally {
+      setJoining(false);
+    }
+  };
 
   return (
     <AppLayout>
@@ -45,7 +75,18 @@ export default function ClassesPage() {
                 Keep the built-in CE course tracker intact while adding instructor-owned classrooms for custom PDFs, invite codes, and student analytics.
               </p>
             </div>
-            <Button asChild size="lg"><Link href="/classes/create" prefetch={false}><Plus className="h-5 w-5" /> Create class</Link></Button>
+            <div className="flex flex-wrap gap-2">
+              <JoinClassDialog
+                open={joinOpen}
+                onOpenChange={setJoinOpen}
+                inviteCode={inviteCode}
+                onInviteCodeChange={setInviteCode}
+                onSubmit={submitJoin}
+                joining={joining}
+                error={joinError}
+              />
+              <Button asChild size="lg"><Link href="/classes/create" prefetch={false}><Plus className="h-5 w-5" /> Create class</Link></Button>
+            </div>
           </div>
         </section>
 
@@ -59,7 +100,7 @@ export default function ClassesPage() {
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-bold">My classes</h2>
-              <p className="text-sm text-muted-foreground">Classes you created appear here. Student join flow comes next.</p>
+              <p className="text-sm text-muted-foreground">Classes you created or joined appear here.</p>
             </div>
           </div>
           {loading ? (
@@ -76,15 +117,66 @@ export default function ClassesPage() {
                 </span>
                 <div>
                   <h3 className="text-lg font-bold">No custom classes yet</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">Create your first classroom without changing the default course pages.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Create your first classroom or join one with an invite code.</p>
                 </div>
-                <Button asChild><Link href="/classes/create" prefetch={false}>Create class <ArrowRight className="h-4 w-4" /></Link></Button>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button asChild><Link href="/classes/create" prefetch={false}>Create class <ArrowRight className="h-4 w-4" /></Link></Button>
+                  <Button type="button" variant="outline" onClick={() => setJoinOpen(true)}><LogIn className="h-4 w-4" /> Join class</Button>
+                </div>
               </CardContent>
             </Card>
           )}
         </section>
       </div>
     </AppLayout>
+  );
+}
+
+function JoinClassDialog({
+  open,
+  onOpenChange,
+  inviteCode,
+  onInviteCodeChange,
+  onSubmit,
+  joining,
+  error
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  inviteCode: string;
+  onInviteCodeChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  joining: boolean;
+  error: string;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button type="button" size="lg" variant="outline"><LogIn className="h-5 w-5" /> Join class</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Join a class</DialogTitle>
+          <DialogDescription>Enter the invite code your instructor shared with you.</DialogDescription>
+        </DialogHeader>
+        <form className="space-y-4 p-6" onSubmit={onSubmit}>
+          <label className="block">
+            <span className="text-sm font-semibold">Invite code</span>
+            <input
+              value={inviteCode}
+              onChange={(event) => onInviteCodeChange(event.target.value.toUpperCase())}
+              placeholder="CE103-ABCDE"
+              className="mt-2 h-11 w-full rounded-lg border bg-background px-3 text-sm font-bold uppercase outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+          </label>
+          {error ? <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error}</p> : null}
+          <Button type="submit" disabled={joining || inviteCode.trim().length < 4} className="w-full">
+            {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
+            Join class
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

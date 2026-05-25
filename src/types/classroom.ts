@@ -22,6 +22,7 @@ export interface ClassMember {
   displayName: string;
   email: string;
   joinedAt: string;
+  inviteCode?: string;
 }
 
 export interface CreateClassInput {
@@ -30,4 +31,15 @@ export interface CreateClassInput {
   description: string;
   term: string;
   color: Classroom["color"];
+}
+
+export interface ClassInvite {
+  classId: string;
+  inviteCode: string;
+  className: string;
+  classCode: string;
+  term: string;
+  ownerId: string;
+  ownerName: string;
+  createdAt: string;
 }
