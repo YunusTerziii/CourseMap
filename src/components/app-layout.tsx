@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, BarChart3, BookOpen, ChevronLeft, ChevronRight, GraduationCap, LayoutDashboard, Map, Settings, ShieldCheck, User } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, ChevronLeft, ChevronRight, GraduationCap, LayoutDashboard, Map, School, Settings, ShieldCheck, User } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
@@ -51,7 +51,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
       items: [
         { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
         { href: "/roadmap", label: "Roadmap", icon: Map },
-        { href: lessonsHref, label: "Lessons", icon: BookOpen, match: "/weeks" }
+        { href: lessonsHref, label: "Lessons", icon: BookOpen, match: "/weeks" },
+        { href: "/classes", label: "Classes", icon: School, match: "/classes" }
       ]
     },
     {

@@ -70,6 +70,29 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /classes/{classId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid ||
+        exists(/databases/$(database)/documents/classes/$(classId)/members/$(request.auth.uid))
+      );
+      allow create: if owns(request.resource.data.ownerId);
+      allow update: if owns(resource.data.ownerId);
+      allow delete: if false;
+
+      match /members/{userId} {
+        allow read: if isSignedIn() && (
+          userId == request.auth.uid ||
+          get(/databases/$(database)/documents/classes/$(classId)).data.ownerId == request.auth.uid
+        );
+        allow create: if owns(userId) && (
+          request.resource.data.role == "student" ||
+          get(/databases/$(database)/documents/classes/$(classId)).data.ownerId == request.auth.uid
+        );
+        allow update: if get(/databases/$(database)/documents/classes/$(classId)).data.ownerId == request.auth.uid;
+        allow delete: if false;
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
