@@ -35,13 +35,13 @@ export function WeekCard({ week }: { week: WeekContent }) {
           visual.shadow
         )}
       >
-        <div className={cn("absolute inset-x-0 top-0 h-1.5 opacity-90", visual.topLine)} />
+        <div className={cn("absolute inset-x-6 top-0 h-px opacity-80", visual.topLine)} />
         <div className={cn("pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100", visual.hoverWash)} />
 
         <CardHeader className="relative pb-3">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <Badge className={cn("mb-4 gap-2 border-0 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm", visual.badge)}>
+              <Badge className={cn("mb-4 gap-2 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide shadow-sm", visual.badge)}>
                 Week {week.weekNumber}
               </Badge>
               <CardTitle className="line-clamp-2 text-lg leading-6">{week.title}</CardTitle>
@@ -163,20 +163,20 @@ function getVisualState(state: WeekCardState) {
       return {
         card: "border-emerald-500/30 from-emerald-500/10 via-card to-card hover:border-emerald-400/55",
         shadow: "hover:shadow-[0_22px_60px_rgba(16,185,129,0.18)]",
-        topLine: "bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400",
+        topLine: "bg-emerald-400/55",
         hoverWash: "bg-emerald-500/5",
-        badge: "bg-gradient-to-r from-emerald-500 to-teal-500",
+        badge: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
         chip: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
         statusText: "text-emerald-500",
         button: "bg-emerald-600 hover:bg-emerald-500 text-white"
       };
     case "in-progress":
       return {
-        card: "border-cyan-400/30 from-cyan-500/10 via-card to-primary/10 hover:border-cyan-300/70",
-        shadow: "hover:shadow-[0_22px_70px_rgba(34,211,238,0.18)] dark:hover:shadow-[0_22px_70px_rgba(129,140,248,0.20)]",
-        topLine: "bg-gradient-to-r from-cyan-400 via-primary to-violet-500",
-        hoverWash: "bg-cyan-400/5",
-        badge: "bg-gradient-to-r from-cyan-500 via-primary to-violet-500",
+        card: "border-cyan-400/25 from-cyan-500/8 via-card to-primary/8 hover:border-cyan-300/45",
+        shadow: "hover:shadow-[0_22px_60px_rgba(34,211,238,0.12)] dark:hover:shadow-[0_22px_60px_rgba(129,140,248,0.14)]",
+        topLine: "bg-cyan-300/55",
+        hoverWash: "bg-cyan-400/[0.035]",
+        badge: "border-cyan-400/20 bg-cyan-400/10 text-cyan-700 dark:text-cyan-200",
         chip: "border-cyan-400/25 bg-cyan-400/10 text-cyan-700 dark:text-cyan-200",
         statusText: "text-cyan-500 dark:text-cyan-300",
         button: "shadow-lg shadow-cyan-500/15"
@@ -185,9 +185,9 @@ function getVisualState(state: WeekCardState) {
       return {
         card: "border-border/80 from-card via-card to-muted/35 opacity-95 hover:border-border",
         shadow: "hover:shadow-[0_18px_45px_rgba(2,6,23,0.12)]",
-        topLine: "bg-gradient-to-r from-muted-foreground/25 via-muted-foreground/15 to-transparent",
+        topLine: "bg-muted-foreground/20",
         hoverWash: "bg-muted/20",
-        badge: "bg-gradient-to-r from-slate-500 to-slate-400",
+        badge: "border-border bg-muted/55 text-muted-foreground",
         chip: "border-border bg-muted/45 text-muted-foreground",
         statusText: "text-muted-foreground",
         button: "bg-foreground text-background hover:bg-foreground/90"
