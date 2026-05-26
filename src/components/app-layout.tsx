@@ -35,7 +35,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const checklist = useLearningStore((state) => state.checklist);
   const lastReadPages = useLearningStore((state) => state.lastReadPages);
   const [coursePickerOpen, setCoursePickerOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("coursemap-sidebar-collapsed") === "true";
+  });
   const currentCourse = getCourseById(currentCourseId);
   const lessonsHref = currentCourse.weeks[0] ? `/weeks/${currentCourse.weeks[0].id}` : "/dashboard";
   const courseProgress = getCourseProgress(currentCourse.weeks, checklist);
@@ -73,6 +76,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const nav = navGroups.flatMap((group) => group.items);
   useActivityTracker();
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed((collapsed) => {
+      const next = !collapsed;
+      window.localStorage.setItem("coursemap-sidebar-collapsed", String(next));
+      return next;
+    });
+    setCoursePickerOpen(false);
+  };
+
   const selectCourse = (courseId: string) => {
     const nextCourse = getCourseById(courseId);
     setCurrentCourseId(courseId);
@@ -109,10 +121,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       >
         <button
           type="button"
-          onClick={() => {
-            setSidebarCollapsed((collapsed) => !collapsed);
-            setCoursePickerOpen(false);
-          }}
+          onClick={toggleSidebar}
           className="absolute -right-3 top-20 z-50 grid h-7 w-7 place-items-center rounded-full border bg-background text-muted-foreground shadow-md transition hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -197,7 +206,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     className={cn(
                       "group relative flex items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all duration-200 hover:translate-x-1 hover:bg-muted/70 hover:text-foreground",
                       sidebarCollapsed && "justify-center px-2 hover:translate-x-0",
-                      active && "bg-primary/[0.12] text-primary shadow-[0_10px_30px_rgba(129,140,248,0.16)] hover:translate-x-0 hover:bg-primary/[0.12]"
+                      active && "bg-primary/[0.12] text-primary shadow-[0_10px_30px_rgba(129,140,248,0.16)] hover:translate-x-0 hover:bg-primary/[0.12] hover:text-primary"
                     )}
                   >
                     <span
@@ -209,7 +218,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     <span
                       className={cn(
                         "grid h-7 w-7 place-items-center rounded-md transition-all duration-200 group-hover:scale-105 group-hover:bg-background/60",
-                        active && "bg-primary text-primary-foreground shadow-sm"
+                        active && "bg-primary text-primary-foreground shadow-sm group-hover:bg-primary group-hover:text-primary-foreground"
                       )}
                     >
                       <item.icon className="h-4 w-4" />
