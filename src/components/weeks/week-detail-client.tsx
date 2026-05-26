@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Download, Heart, ListChecks, Minus, Plus, RotateCcw, Search } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, Heart, ListChecks, Maximize2, Minimize2, Minus, Plus, RotateCcw, Search } from "lucide-react";
 import { AppLayout } from "@/components/app-layout";
 import { NotesEditor } from "@/components/notes-editor";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useLearningStore } from "@/hooks/useLearningStore";
+import { cn } from "@/lib/utils";
 import type { CourseContent, WeekContent } from "@/types/week";
 
 export interface WeekNavItem {
@@ -354,17 +355,36 @@ function PdfCanvasPage({
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const hostRef = useRef<HTMLDivElement | null>(null);
+  const viewerRef = useRef<HTMLDivElement | null>(null);
   const pdfRef = useRef<any>(null);
   const [status, setStatus] = useState("PDF sayfası yükleniyor...");
   const [zoom, setZoom] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const zoomPercent = Math.round(zoom * 100);
   const zoomOut = () => setZoom((current) => Math.max(0.5, Number((current - 0.1).toFixed(2))));
   const zoomIn = () => setZoom((current) => Math.min(2.5, Number((current + 0.1).toFixed(2))));
   const resetZoom = () => setZoom(1);
+  const toggleFullscreen = async () => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      return;
+    }
+    await viewer.requestFullscreen();
+  };
 
   useEffect(() => {
     pdfRef.current = null;
   }, [source]);
+
+  useEffect(() => {
+    const syncFullscreen = () => {
+      setIsFullscreen(document.fullscreenElement === viewerRef.current);
+    };
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -422,10 +442,16 @@ function PdfCanvasPage({
       cancelled = true;
       renderTask?.cancel();
     };
-  }, [source, pageNumber, zoom]);
+  }, [source, pageNumber, zoom, isFullscreen]);
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-slate-950/5 dark:bg-slate-950">
+    <div
+      ref={viewerRef}
+      className={cn(
+        "relative flex h-full min-h-0 flex-col overflow-hidden bg-slate-950/5 dark:bg-slate-950",
+        isFullscreen && "h-screen w-screen bg-slate-950"
+      )}
+    >
       <div ref={hostRef} className={`min-h-0 flex-1 p-2 sm:p-3 ${zoom > 1 ? "overflow-auto" : "overflow-x-hidden overflow-y-auto"}`}>
         <div className="flex min-h-full w-max min-w-full items-center justify-center">
           <canvas ref={canvasRef} className="rounded-sm bg-white shadow-2xl" />
@@ -476,6 +502,16 @@ function PdfCanvasPage({
           </button>
           <Button variant="outline" size="sm" onClick={zoomIn} disabled={zoom >= 2.5} className="h-9 w-9 shrink-0 rounded-full p-0" title="Yakınlaştır">
             <Plus className="h-4 w-4" />
+          </Button>
+          <div className="mx-1 h-6 w-px shrink-0 bg-white/15" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleFullscreen}
+            className="h-9 w-9 shrink-0 rounded-full p-0"
+            title={isFullscreen ? "Tam ekrandan cik" : "Tam ekran kullan"}
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
         </div>
       </div>
