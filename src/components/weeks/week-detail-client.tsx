@@ -409,8 +409,9 @@ function PdfCanvasPage({
       if (cancelled) return;
 
       const baseViewport = page.getViewport({ scale: 1 });
-      const availableWidth = Math.max(280, host.clientWidth - 12);
-      const availableHeight = Math.max(280, host.clientHeight - 12);
+      const hostPadding = isFullscreen && zoom === 1 ? 0 : 12;
+      const availableWidth = Math.max(280, host.clientWidth - hostPadding);
+      const availableHeight = Math.max(280, host.clientHeight - hostPadding);
       const widthScale = availableWidth / baseViewport.width;
       const heightScale = availableHeight / baseViewport.height;
       const scale = Math.min(widthScale, heightScale, 2.25) * zoom;
@@ -452,8 +453,15 @@ function PdfCanvasPage({
         isFullscreen && "h-screen w-screen bg-slate-950"
       )}
     >
-      <div ref={hostRef} className={`min-h-0 flex-1 p-2 sm:p-3 ${zoom > 1 ? "overflow-auto" : "overflow-x-hidden overflow-y-auto"}`}>
-        <div className="flex min-h-full w-max min-w-full items-center justify-center">
+      <div
+        ref={hostRef}
+        className={cn(
+          "min-h-0 flex-1",
+          isFullscreen && zoom === 1 ? "overflow-hidden p-0" : "p-2 sm:p-3",
+          zoom > 1 ? "overflow-auto" : "overflow-hidden"
+        )}
+      >
+        <div className={cn("flex min-h-full items-center justify-center", zoom > 1 ? "w-max min-w-full" : "w-full")}>
           <canvas ref={canvasRef} className="rounded-sm bg-white shadow-2xl" />
         </div>
       </div>
