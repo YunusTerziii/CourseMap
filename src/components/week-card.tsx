@@ -12,6 +12,14 @@ import { useLearningStore } from "@/hooks/useLearningStore";
 import { cn } from "@/lib/utils";
 
 type WeekCardState = "completed" | "in-progress" | "not-started";
+type WeekArtworkVariant = "code" | "flow" | "graph" | "matrix" | "stack" | "key";
+
+interface WeekArtwork {
+  label: string;
+  variant: WeekArtworkVariant;
+  tone: string;
+  panel: string;
+}
 
 export function WeekCard({ week }: { week: WeekContent }) {
   const checklist = useLearningStore((state) => state.checklist);
@@ -23,6 +31,7 @@ export function WeekCard({ week }: { week: WeekContent }) {
   const resumeHref = `/weeks/${week.id}${lastReadPage ? `?page=${lastReadPage}` : ""}`;
   const state: WeekCardState = value === 100 ? "completed" : value > 0 || Boolean(lastReadPage) ? "in-progress" : "not-started";
   const visual = getVisualState(state);
+  const artwork = getWeekArtwork(week);
   const topics = week.sections.slice(0, 3);
   const hiddenTopicCount = Math.max(0, week.sections.length - topics.length);
 
@@ -37,8 +46,9 @@ export function WeekCard({ week }: { week: WeekContent }) {
       >
         <div className={cn("absolute inset-x-6 top-0 h-px opacity-80", visual.topLine)} />
         <div className={cn("pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100", visual.hoverWash)} />
+        <WeekBackgroundArtwork artwork={artwork} />
 
-        <CardHeader className="relative pb-3">
+        <CardHeader className="relative z-10 pb-3">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <Badge className={cn("mb-4 gap-2 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide shadow-sm", visual.badge)}>
@@ -57,7 +67,7 @@ export function WeekCard({ week }: { week: WeekContent }) {
           </div>
         </CardHeader>
 
-        <CardContent className="relative flex flex-1 flex-col space-y-4">
+        <CardContent className="relative z-10 flex flex-1 flex-col space-y-4">
           <p className={cn("line-clamp-3 min-h-[3.75rem] text-sm leading-6", state === "not-started" ? "text-muted-foreground/75" : "text-muted-foreground")}>
             {week.summary}
           </p>
@@ -100,6 +110,75 @@ export function WeekCard({ week }: { week: WeekContent }) {
       </Card>
     </div>
   );
+}
+
+function WeekBackgroundArtwork({ artwork }: { artwork: WeekArtwork }) {
+  return (
+    <div className={cn("pointer-events-none absolute right-4 top-14 z-0 hidden h-36 w-36 text-current opacity-45 transition duration-300 group-hover:opacity-65 sm:block", artwork.tone)}>
+      <div className="absolute right-1 top-1 h-24 w-24 rotate-12 rounded-[1.7rem] border border-current/20 bg-background/25 shadow-inner backdrop-blur-sm" />
+      <div className={cn("absolute right-1 top-1 grid h-24 w-24 rotate-12 place-items-center rounded-[1.7rem] border backdrop-blur-sm", artwork.panel)}>
+        <div className="-rotate-12">
+          {renderArtworkGlyph(artwork)}
+        </div>
+      </div>
+      <div className="absolute right-20 top-24 h-11 w-11 rounded-full border border-current/15" />
+      <div className="absolute right-24 top-28 h-3 w-3 rounded-full bg-current/20" />
+      <div className="absolute right-10 top-32 h-px w-16 bg-current/15" />
+      <div className="absolute right-6 top-36 h-px w-10 bg-current/10" />
+    </div>
+  );
+}
+
+function renderArtworkGlyph(artwork: WeekArtwork) {
+  switch (artwork.variant) {
+    case "graph":
+      return (
+        <div className="relative h-14 w-16 opacity-70">
+          <span className="absolute left-1 top-1 h-3 w-3 rounded-full border border-current/70 bg-current/10" />
+          <span className="absolute right-2 top-4 h-3 w-3 rounded-full border border-current/70 bg-current/10" />
+          <span className="absolute bottom-2 left-6 h-3 w-3 rounded-full border border-current/70 bg-current/10" />
+          <span className="absolute left-4 top-4 h-px w-9 rotate-12 bg-current/35" />
+          <span className="absolute left-8 top-8 h-px w-8 rotate-[115deg] bg-current/35" />
+          <span className="absolute left-4 top-8 h-px w-8 rotate-[55deg] bg-current/35" />
+        </div>
+      );
+    case "matrix":
+      return (
+        <div className="grid grid-cols-3 gap-1.5 opacity-70">
+          {Array.from({ length: 9 }).map((_, index) => (
+            <span key={index} className="h-3 w-3 rounded-sm border border-current/45 bg-current/10" />
+          ))}
+        </div>
+      );
+    case "stack":
+      return (
+        <div className="space-y-1.5 opacity-70">
+          <span className="block h-2 w-12 rounded-full bg-current/45" />
+          <span className="block h-2 w-16 rounded-full bg-current/30" />
+          <span className="block h-2 w-10 rounded-full bg-current/20" />
+          <span className="block h-2 w-14 rounded-full bg-current/25" />
+        </div>
+      );
+    case "key":
+      return (
+        <div className="relative h-14 w-16 opacity-70">
+          <span className="absolute left-1 top-3 h-7 w-7 rounded-full border-2 border-current/45" />
+          <span className="absolute left-8 top-6 h-1.5 w-8 rounded-full bg-current/45" />
+          <span className="absolute right-3 top-6 h-5 w-1.5 rounded-full bg-current/35" />
+          <span className="absolute right-0 top-6 h-4 w-1.5 rounded-full bg-current/25" />
+        </div>
+      );
+    case "flow":
+      return (
+        <div className="relative h-14 w-16 opacity-70">
+          <span className="absolute left-0 top-2 rounded-md border border-current/35 px-2 py-1 text-[10px] font-black">01</span>
+          <span className="absolute right-0 bottom-2 rounded-md border border-current/35 px-2 py-1 text-[10px] font-black">10</span>
+          <span className="absolute left-8 top-7 h-px w-8 rotate-45 bg-current/35" />
+        </div>
+      );
+    default:
+      return <span className="text-lg font-black tracking-wide opacity-65">{artwork.label}</span>;
+  }
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -157,6 +236,49 @@ function getActionLabel(state: WeekCardState) {
   }
 }
 
+function getWeekArtwork(week: WeekContent): WeekArtwork {
+  const text = `${week.id} ${week.title} ${week.summary} ${week.sections.map((section) => section.title).join(" ")}`.toLowerCase();
+
+  if (text.includes("graph") || text.includes("shortest") || text.includes("roadmap")) {
+    return { label: "Graph", variant: "graph", tone: "text-sky-300", panel: "border-sky-300/20 bg-sky-300/10" };
+  }
+  if (text.includes("matrix")) {
+    return { label: "MAT", variant: "matrix", tone: "text-cyan-300", panel: "border-cyan-300/20 bg-cyan-300/10" };
+  }
+  if (text.includes("heap") || text.includes("huffman") || text.includes("stack") || text.includes("queue")) {
+    return { label: "Heap", variant: "stack", tone: "text-amber-300", panel: "border-amber-300/20 bg-amber-300/10" };
+  }
+  if (text.includes("crypto") || text.includes("symenc") || text.includes("otp") || text.includes("key")) {
+    return { label: "Key", variant: "key", tone: "text-emerald-300", panel: "border-emerald-300/20 bg-emerald-300/10" };
+  }
+  if (text.includes("dynamic") || text.includes("dp") || text.includes("recurrence") || text.includes("recursion") || text.includes("lcs") || text.includes("knapsack")) {
+    return { label: "DP", variant: "flow", tone: "text-violet-300", panel: "border-violet-300/20 bg-violet-300/10" };
+  }
+  if (text.includes("git")) {
+    return { label: "Git", variant: "graph", tone: "text-orange-300", panel: "border-orange-300/20 bg-orange-300/10" };
+  }
+  if (text.includes("test")) {
+    return { label: "TDD", variant: "flow", tone: "text-rose-300", panel: "border-rose-300/20 bg-rose-300/10" };
+  }
+  if (text.includes("java")) {
+    return { label: "Java", variant: "code", tone: "text-red-300", panel: "border-red-300/20 bg-red-300/10" };
+  }
+  if (text.includes("c++") || text.includes("cpp")) {
+    return { label: "C++", variant: "code", tone: "text-blue-300", panel: "border-blue-300/20 bg-blue-300/10" };
+  }
+  if (text.includes("c#") || text.includes("csharp")) {
+    return { label: "C#", variant: "code", tone: "text-purple-300", panel: "border-purple-300/20 bg-purple-300/10" };
+  }
+  if (text.includes("class") || text.includes("object") || text.includes("oop") || text.includes("inheritance") || text.includes("polymorphism")) {
+    return { label: "OOP", variant: "code", tone: "text-indigo-300", panel: "border-indigo-300/20 bg-indigo-300/10" };
+  }
+  if (text.includes("setup") || text.includes("developer") || text.includes("console") || text.includes("program")) {
+    return { label: "Dev", variant: "code", tone: "text-cyan-300", panel: "border-cyan-300/20 bg-cyan-300/10" };
+  }
+
+  return { label: "CE", variant: "code", tone: "text-primary/70", panel: "border-primary/20 bg-primary/10" };
+}
+
 function getVisualState(state: WeekCardState) {
   switch (state) {
     case "completed":
@@ -172,7 +294,7 @@ function getVisualState(state: WeekCardState) {
       };
     case "in-progress":
       return {
-        card: "border-cyan-400/25 from-cyan-500/8 via-card to-primary/8 hover:border-cyan-300/45",
+        card: "border-cyan-400/25 from-cyan-500/10 via-card to-primary/10 hover:border-cyan-300/45",
         shadow: "hover:shadow-[0_22px_60px_rgba(34,211,238,0.12)] dark:hover:shadow-[0_22px_60px_rgba(129,140,248,0.14)]",
         topLine: "bg-cyan-300/55",
         hoverWash: "bg-cyan-400/[0.035]",
